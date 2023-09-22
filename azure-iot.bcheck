@@ -1,0 +1,24 @@
+metadata:
+    language: v1-beta
+    name: "Azure IoT Hub Information Disclosure"
+    description: "Examines the response from POST request to Azure IoT hubs for disclosed SAS token, port and the name of the IoT hub"
+    author: "Dimitris Pallis"
+    tags: "mqtt", "Azure IoT", "Information Disclosure"
+
+run for each:
+    potential_path =
+        "/api/v1/hubs"
+
+
+given host then
+    send request called check:
+        method: "POST"
+        path: {potential_path}
+
+    if "brokerAddress" in {check.response.body} and "username" in {check.response.body} and "password" in {check.response.body} and {check.response.status_code} is "201" then
+        report issue:
+            severity: low
+            confidence: certain
+            detail: `The API leaked information regarding the underlying Azure infrastructure while using the MQTT protocol directly. For more information read: https://learn.microsoft.com/en-us/azure/iot/iot-mqtt-connect-to-iot-hub`
+            remediation: "Review the security architecture of your IoT solutions as per Microsoft's guide: https://learn.microsoft.com/en-us/azure/iot/iot-security-architecture#security-in-iot"
+    end if
